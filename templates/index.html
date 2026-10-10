@@ -1,0 +1,314 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sleep Quality Predictor</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="{{ url_for('static', filename='js/script.js') }}" defer></script>
+</head>
+
+<body>
+    <main class="page-container">
+
+        <header class="page-heading">
+            <div class="brand-mark">SQ</div>
+            <div>
+                <h1>Sleep Quality Predictor</h1>
+                <p>Understand how your sleep and daily habits relate to sleep quality.</p>
+            </div>
+        </header>
+
+        <section class="info-banner">
+            <span class="info-icon">i</span>
+            <p>
+                Enter your information below to predict a sleep-quality category.
+                Use the hints under each field to understand what to enter.
+            </p>
+        </section>
+
+        {% if error %}
+        <div class="message error" role="alert">
+            <strong>Unable to make prediction</strong>
+            <p>{{ error }}</p>
+        </div>
+        {% endif %}
+
+        {% if result %}
+        <section class="result-card" aria-live="polite">
+            <div class="result-top">
+                <div>
+                    <p class="section-kicker">YOUR RESULT</p>
+                    <h2>Predicted sleep quality</h2>
+                </div>
+                <span class="result-icon">✓</span>
+            </div>
+
+            <div class="result-label {{ result.prediction|lower }}">
+                {{ result.prediction }}
+            </div>
+
+            <p class="result-description">
+                This category is predicted from the information you entered.
+            </p>
+
+            <div class="result-details">
+                <div>
+                    <span>Selected model</span>
+                    <strong>{{ models.get(selected_model, selected_model) }}</strong>
+                </div>
+
+                {% if result.confidence is not none %}
+                <div>
+                    <span>Highest class probability</span>
+                    <strong>{{ result.confidence }}%</strong>
+                </div>
+                {% endif %}
+            </div>
+
+            <p class="small-note">
+                This is an educational machine-learning prediction, not a medical
+                diagnosis. The probability is not a measure of medical certainty.
+            </p>
+        </section>
+        {% endif %}
+
+        <section class="form-card">
+            <div class="section-heading">
+                <div>
+                    <p class="section-kicker">PERSONAL DETAILS</p>
+                    <h2>Enter your information</h2>
+                    <p>Complete all fields to get a prediction.</p>
+                </div>
+                <span class="required-note">* Required</span>
+            </div>
+
+            <form method="POST" id="sleep-form">
+                <h3 class="group-title">About you</h3>
+
+                <div class="form-grid">
+                    <div class="field">
+                        <label for="age">Age <span>*</span></label>
+                        <input id="age" name="age" type="number"
+                               min="1" max="120" step="1" required
+                               placeholder="e.g. 28"
+                               value="{{ request.form.get('age', '') }}">
+                        <small>Enter your age in years (1–120).</small>
+                    </div>
+
+                    <div class="field">
+                        <label for="gender">Gender <span>*</span></label>
+                        <select id="gender" name="gender" required>
+                            <option value="">Choose gender</option>
+                            {% for item in ["Male", "Female"] %}
+                            <option value="{{ item }}"
+                                {% if request.form.get('gender') == item %}selected{% endif %}>
+                                {{ item }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <small>Select one of the available categories.</small>
+                    </div>
+
+                    <div class="field">
+                        <label for="occupation">Occupation <span>*</span></label>
+                        <select id="occupation" name="occupation" required>
+                            <option value="">Choose occupation</option>
+                            {% for item in [
+                                "Accountant", "Doctor", "Engineer", "Lawyer",
+                                "Manager", "Nurse", "Sales Representative",
+                                "Salesperson", "Scientist", "Software Engineer",
+                                "Teacher"
+                            ] %}
+                            <option value="{{ item }}"
+                                {% if request.form.get('occupation') == item %}selected{% endif %}>
+                                {{ item }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <small>Select your occupation from the list.</small>
+                    </div>
+
+                    <div class="field">
+                        <label for="bmi_category">BMI category <span>*</span></label>
+                        <select id="bmi_category" name="bmi_category" required>
+                            <option value="">Choose BMI category</option>
+                            {% for item in ["Normal", "Normal Weight", "Overweight", "Obese"] %}
+                            <option value="{{ item }}"
+                                {% if request.form.get('bmi_category') == item %}selected{% endif %}>
+                                {{ item }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <small>Select the category that matches your dataset or known BMI classification.</small>
+                    </div>
+                </div>
+
+                <h3 class="group-title">Sleep and lifestyle</h3>
+
+                <div class="form-grid">
+                    <div class="field">
+                        <label for="sleep_duration">Sleep duration (hours) <span>*</span></label>
+                        <input id="sleep_duration" name="sleep_duration"
+                               type="number" min="0.1" max="24" step="0.1"
+                               required placeholder="e.g. 7.5"
+                               value="{{ request.form.get('sleep_duration', '') }}">
+                        <small>Total hours you sleep per day. Decimals are allowed, such as 6.5.</small>
+                    </div>
+
+                    <div class="field">
+                        <label for="physical_activity">Physical activity level <span>*</span></label>
+                        <input id="physical_activity" name="physical_activity"
+                               type="number" min="0" step="any"
+                               required placeholder="e.g. 45"
+                               value="{{ request.form.get('physical_activity', '') }}">
+                        <small>Enter the activity-level value in the dataset's units; the example is 45.</small>
+                    </div>
+
+                    <div class="field">
+                        <label for="stress_level">Stress level (1–10) <span>*</span></label>
+                        <input id="stress_level" name="stress_level"
+                               type="number" min="1" max="10" step="1"
+                               required placeholder="e.g. 5"
+                               value="{{ request.form.get('stress_level', '') }}">
+                        <small>Enter a whole number: 1 is low stress and 10 is high stress.</small>
+                    </div>
+
+                    <div class="field">
+                        <label for="daily_steps">Daily steps <span>*</span></label>
+                        <input id="daily_steps" name="daily_steps"
+                               type="number" min="0" step="1"
+                               required placeholder="e.g. 7000"
+                               value="{{ request.form.get('daily_steps', '') }}">
+                        <small>Approximate number of steps taken per day. Use a whole number.</small>
+                    </div>
+
+                    <div class="field">
+                        <label for="sleep_disorder">Sleep disorder <span>*</span></label>
+                        <select id="sleep_disorder" name="sleep_disorder" required>
+                            <option value="">Choose an option</option>
+                            {% for item in ["None", "Insomnia", "Sleep Apnea"] %}
+                            <option value="{{ item }}"
+                                {% if request.form.get('sleep_disorder') == item %}selected{% endif %}>
+                                {{ item }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <small>Select None if no disorder is recorded; otherwise select the matching category.</small>
+                    </div>
+                </div>
+
+                <h3 class="group-title">Health measurements</h3>
+
+                <div class="form-grid">
+                    <div class="field">
+                        <label for="systolic_bp">Systolic blood pressure <span>*</span></label>
+                        <input id="systolic_bp" name="systolic_bp"
+                               type="number" min="50" max="300" step="1"
+                               required placeholder="e.g. 120">
+                        <small>Enter the upper blood-pressure number, in mmHg.</small>
+                    </div>
+
+                    <div class="field">
+                        <label for="diastolic_bp">Diastolic blood pressure <span>*</span></label>
+                        <input id="diastolic_bp" name="diastolic_bp"
+                               type="number" min="30" max="200" step="1"
+                               required placeholder="e.g. 80">
+                        <small>Enter the lower blood-pressure number, in mmHg.</small>
+                    </div>
+
+                    <div class="field">
+                        <label for="heart_rate">Heart rate (beats/min) <span>*</span></label>
+                        <input id="heart_rate" name="heart_rate"
+                               type="number" min="1" max="250" step="1"
+                               required placeholder="e.g. 72">
+                        <small>Enter heartbeats per minute.</small>
+                    </div>
+                </div>
+
+                <div class="field model-field">
+                    <label for="model">Prediction model <span>*</span></label>
+                    <select id="model" name="model" required>
+                        {% for key, name in models.items() %}
+                        <option value="{{ key }}"
+                            {% if selected_model == key %}selected{% endif %}>
+                            {{ name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <small>Choose a trained model. Random Forest performed best in your current cross-validation results.</small>
+                </div>
+
+                <button type="submit" class="primary-button">
+                    Predict Sleep Quality <span aria-hidden="true">→</span>
+                </button>
+
+                <p class="privacy-note">
+                    Your prediction uses the values submitted in this form.
+                </p>
+            </form>
+        </section>
+
+        <section class="performance-card">
+            <div class="section-heading">
+                <div>
+                    <p class="section-kicker">MODEL EVALUATION</p>
+                    <h2>Compare model performance</h2>
+                    <p>Results from stratified five-fold cross-validation.</p>
+                </div>
+            </div>
+
+            {% if cv_results %}
+            <div class="table-wrapper">
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Model</th>
+                            <th>Accuracy</th>
+                            <th>Accuracy Std.</th>
+                            <th>Macro Precision</th>
+                            <th>Macro Recall</th>
+                            <th>Macro F1</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in cv_results %}
+                        <tr class="{% if row['Model'] == models.get(selected_model) %}selected-model{% endif %}">
+                            <td>
+                                {{ row["Model"] }}
+                                {% if row["Model"] == models.get(selected_model) %}
+                                <span class="selected-tag">Selected</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ "%.2f"|format(row["Accuracy Mean"]) }}%</td>
+                            <td>{{ "%.2f"|format(row["Accuracy Std"]) }} percentage points</td>
+                            <td>{{ "%.2f"|format(row["Macro Precision"]) }}%</td>
+                            <td>{{ "%.2f"|format(row["Macro Recall"]) }}%</td>
+                            <td>{{ "%.2f"|format(row["Macro F1"]) }}%</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="small-note">
+                Results are not available yet. Run
+                <code>python cross_validation.py</code> to generate them.
+            </p>
+            {% endif %}
+
+            <p class="small-note">
+                Cross-validation scores summarize performance on validation folds;
+                they do not guarantee the accuracy of an individual prediction.
+            </p>
+        </section>
+
+        <footer>
+            Sleep Quality Predictor · Academic machine-learning project
+        </footer>
+    </main>
+</body>
+</html>

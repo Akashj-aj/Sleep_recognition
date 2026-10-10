@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Sleep Quality Pattern Recognition{% endblock %}</title>
+
+    <!-- Fonts: Geist (Headings) & Geist Mono (Body/Labels) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <!-- CSS Styling & Chart.js CDN -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}" defer></script>
+</head>
+<body class="nexus-theme">
+    <!-- Subtle Grid Overlay -->
+    <div class="grid-overlay"></div>
+
+    <!-- Navigation Bar -->
+    <header class="top-nav-wrapper">
+        <div class="nav-container floating-glass">
+            <a href="{{ url_for('dashboard') }}" class="nav-brand">
+                <div class="brand-text">
+                    <span class="brand-title">SleepLab</span>
+                    <span class="brand-sub">Pattern Recognition</span>
+                </div>
+            </a>
+
+            <button class="mobile-toggle" id="mobile-menu-btn" aria-label="Toggle Navigation">
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+            </button>
+
+            <nav class="nav-links" id="nav-menu">
+                <a href="{{ url_for('dashboard') }}" class="nav-item {% if active_page == 'dashboard' %}active{% endif %}">
+                    Dashboard
+                </a>
+                <a href="{{ url_for('predict') }}" class="nav-item {% if active_page == 'prediction' %}active{% endif %}">
+                    Prediction
+                </a>
+                <a href="{{ url_for('dataset_analysis') }}" class="nav-item {% if active_page == 'dataset' %}active{% endif %}">
+                    Dataset
+                </a>
+                <a href="{{ url_for('performance') }}" class="nav-item {% if active_page == 'performance' %}active{% endif %}">
+                    Performance
+                </a>
+                <a href="{{ url_for('about') }}" class="nav-item {% if active_page == 'about' %}active{% endif %}">
+                    About
+                </a>
+            </nav>
+
+            <div class="nav-cta-desktop">
+                <a href="{{ url_for('predict') }}" class="btn-nexus-small">
+                    Predict Now <span class="arrow-icon">&rarr;</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Wrapper -->
+    <main class="main-wrapper">
+        <div class="page-container">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer-nexus">
+        <div class="footer-container">
+            <div class="footer-brand">
+                <span class="footer-title">Sleep Quality Pattern Recognition</span>
+                <span class="footer-tag">Machine Learning Platform</span>
+            </div>
+            <p class="footer-note">Evaluated using 5 Supervised Machine Learning Pipelines on 374 Benchmark Dataset Records</p>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}About Project | Sleep Quality Pattern Recognition{% endblock %}
+
+{% block content %}
+<section class="page-intro-section">
+    <span class="card-kicker">Academic Context</span>
+    <h1>About Project</h1>
+    <p class="section-desc">
+        Project background, dataset methodology, machine-learning pipeline architecture, and study limitations.
+    </p>
+</section>
+
+<!-- About Grid Cards -->
+<div class="about-grid-2col">
+    <!-- Card 1: Problem & Objectives -->
+    <div class="card about-card">
+        <div class="about-card-icon">/</div>
+        <h2>Project Objectives</h2>
+        <p>
+            Sleep quality plays a critical role in human health and cognitive performance. This academic project evaluates whether self-reported lifestyle, demographic, and physiological metrics can accurately categorize individual sleep quality into three distinct classes: <strong>Poor</strong>, <strong>Moderate</strong>, and <strong>Good</strong>.
+        </p>
+        <p>
+            The project compares five supervised machine-learning algorithms (Logistic Regression, Decision Tree, Random Forest, SVM, and KNN) to determine which pipeline achieves the highest predictive accuracy and balance across categories.
+        </p>
+    </div>
+
+    <!-- Card 2: Dataset Characteristics -->
+    <div class="card about-card">
+        <div class="about-card-icon">//</div>
+        <h2>Dataset Overview</h2>
+        <p>
+            The study utilizes the 374-record <em>Sleep Health and Lifestyle Dataset</em>. The dataset incorporates 12 input features spanning:
+        </p>
+        <ul class="about-list">
+            <li><strong>Demographics:</strong> Age, Gender, Occupation</li>
+            <li><strong>Lifestyle Habits:</strong> Hours of Sleep per Day, Physical Activity Level (minutes/day), Perceived Stress Level (1-10 scale), Daily Steps</li>
+            <li><strong>Physiological &amp; Health Measures:</strong> Systolic Blood Pressure, Diastolic Blood Pressure, Heart Rate, BMI Category, Sleep Disorder Diagnosis</li>
+        </ul>
+    </div>
+
+    <!-- Card 3: Preprocessing Pipeline -->
+    <div class="card about-card">
+        <div class="about-card-icon">///</div>
+        <h2>Preprocessing Pipeline</h2>
+        <p>
+            Data transformation is executed using scikit-learn <code>Pipeline</code> and <code>ColumnTransformer</code> modules:
+        </p>
+        <ul class="about-list">
+            <li><strong>Target Categorization:</strong> Raw <code>Quality of Sleep</code> scores (1-10) are binned into Poor (&le;5), Moderate (6-7), and Good (8-10).</li>
+            <li><strong>Feature Engineering:</strong> Blood Pressure strings (e.g. <code>126/83</code>) are split into separate <code>Systolic_BP</code> and <code>Diastolic_BP</code> numeric features. Missing <code>Sleep Disorder</code> entries are imputed as "None".</li>
+            <li><strong>Scaling &amp; Encoding:</strong> Numeric features are median-imputed and scaled with <code>StandardScaler</code>; categorical features are one-hot encoded using <code>OneHotEncoder</code>.</li>
+        </ul>
+    </div>
+
+    <!-- Card 4: Evaluation Strategy -->
+    <div class="card about-card">
+        <div class="about-card-icon">////</div>
+        <h2>Evaluation Strategy</h2>
+        <p>
+            Models are evaluated using <strong>5-Fold Stratified Cross-Validation</strong> (<code>StratifiedKFold</code>). Stratification ensures that each fold maintains identical target class proportions as the total dataset.
+        </p>
+        <p>
+            Random Forest emerged as the top-performing classifier, achieving <strong>98.57% mean cross-validation accuracy</strong> and a <strong>94.82% Macro F1 score</strong>.
+        </p>
+    </div>
+</div>
+
+<!-- Project Limitations Box -->
+<div class="card limitation-card">
+    <div class="limitation-card-header">
+        <span class="warning-icon">!</span>
+        <h2>Project Limitations &amp; Scope</h2>
+    </div>
+    <div class="limitation-card-body">
+        <p>
+            <strong>Input Data Dependencies:</strong> Categorical variables like <em>BMI Category</em> and <em>Sleep Disorder</em> require pre-existing diagnostic inputs. The pipeline relies on users supplying these categories or selecting default representations.
+        </p>
+        <p>
+            <strong>Class Imbalance:</strong> The dataset contains 374 records, with 33 records in the Poor category, 187 in Moderate, and 154 in Good. While Macro F1 accounts for class imbalance during evaluation, larger and more diverse datasets would improve generalizability.
+        </p>
+    </div>
+</div>
+
+<!-- Mandatory Disclaimer -->
+<div class="disclaimer-banner">
+    <h3>Educational Disclaimer</h3>
+    <p>
+        This application and its underlying machine-learning models are developed solely for academic demonstration and research purposes.
+        The classifications generated by this software are statistical predictions and do not constitute a medical diagnosis, medical opinion, or clinical advice.
+    </p>
+</div>
+{% endblock %}

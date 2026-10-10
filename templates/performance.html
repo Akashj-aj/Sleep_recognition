@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+{% block title %}Model Performance | Sleep Quality Pattern Recognition{% endblock %}
+
+{% block content %}
+<section class="page-intro-section">
+    <span class="card-kicker">Cross-Validation Benchmark</span>
+    <h1>Model Performance &amp; Evaluation</h1>
+    <p class="section-desc">
+        Comparative performance analysis of five machine-learning models evaluated using 5-fold stratified cross-validation.
+    </p>
+</section>
+
+<section class="card model-explorer-card">
+    <div class="model-explorer-header">
+        <div>
+            <span class="card-kicker">Model Explorer</span>
+            <h2>Learn about each classifier</h2>
+        </div>
+        <form method="get" action="{{ url_for('performance') }}" class="performance-model-select">
+            <label for="performance-model">Select model</label>
+            <select id="performance-model" name="model" onchange="this.form.submit()">
+                {% for row in cv_results %}
+                <option value="{{ row['Model'] }}" {% if row['Model'] == selected_model %}selected{% endif %}>{{ row['Model'] }}</option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
+    {% if selected_result %}
+    <div class="model-explorer-body">
+        <div class="model-description">
+            <h3>{{ selected_model }}</h3>
+            {% set description = model_descriptions.get(selected_model) %}
+            {% if description %}
+            <div class="model-detail-line"><strong>Category</strong><span>{{ description.category }}</span></div>
+            <div class="model-detail-line"><strong>How it works</strong><span>{{ description.how }}</span></div>
+            <div class="model-detail-line"><strong>In simple terms</strong><span>{{ description.simple }}</span></div>
+            {% endif %}
+        </div>
+        <div class="selected-model-metrics">
+            <div><span>Accuracy</span><strong>{{ '%.2f'|format(selected_result['Accuracy Mean']) }}%</strong></div>
+            <div><span>Macro Precision</span><strong>{{ '%.2f'|format(selected_result['Macro Precision']) }}%</strong></div>
+            <div><span>Macro Recall</span><strong>{{ '%.2f'|format(selected_result['Macro Recall']) }}%</strong></div>
+            <div><span>Macro F1</span><strong>{{ '%.2f'|format(selected_result['Macro F1']) }}%</strong></div>
+        </div>
+    </div>
+    {% endif %}
+</section>
+
+<!-- Highlight Best Model Banner -->
+<div class="card best-model-card">
+    <div class="best-model-badge">
+        &#x2605; Top Performer
+    </div>
+    <div class="best-model-content">
+        <h2>Random Forest Classifier</h2>
+        <p>
+            According to the 5-fold stratified cross-validation experiment, <strong>Random Forest</strong> achieved the highest overall performance with a <strong>98.57% Mean Accuracy</strong> and a <strong>94.82% Macro F1 Score</strong>.
+        </p>
+    </div>
+    <div class="best-model-stats">
+        <div class="stat-mini">
+            <span class="stat-mini-label">CV Accuracy</span>
+            <strong class="stat-mini-val">98.57%</strong>
+        </div>
+        <div class="stat-mini">
+            <span class="stat-mini-label">Macro F1</span>
+            <strong class="stat-mini-val">94.82%</strong>
+        </div>
+    </div>
+</div>
+
+<!-- Comparison Table -->
+<div class="card table-card">
+    <div class="table-card-header">
+        <div>
+            <span class="card-kicker">Cross-Validation Results</span>
+            <h2>Stratified 5-Fold Evaluation Results</h2>
+        </div>
+        <span class="badge badge-purple">5 Folds &bull; Stratified Split</span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table performance-table">
+            <thead>
+                <tr>
+                    <th>Model</th>
+                    <th>Mean CV Accuracy</th>
+                    <th>Accuracy Std. Dev.</th>
+                    <th>Macro Precision</th>
+                    <th>Macro Recall</th>
+                    <th>Macro F1 Score</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in cv_results %}
+                <tr class="{% if row['Model'] == 'Random Forest' %}row-highlight{% endif %}">
+                    <td class="model-name-cell">
+                        <strong>{{ row['Model'] }}</strong>
+                        {% if row['Model'] == 'Random Forest' %}
+                        <span class="top-tag">Best Model</span>
+                        {% endif %}
+                    </td>
+                    <td class="metric-val"><strong>{{ "%.2f"|format(row["Accuracy Mean"]) }}%</strong></td>
+                    <td class="text-muted">&plusmn;{{ "%.2f"|format(row["Accuracy Std"]) }}%</td>
+                    <td>{{ "%.2f"|format(row["Macro Precision"]) }}%</td>
+                    <td>{{ "%.2f"|format(row["Macro Recall"]) }}%</td>
+                    <td class="metric-val"><strong>{{ "%.2f"|format(row["Macro F1"]) }}%</strong></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="table-footer-note">
+        <em>Note: Results read dynamically from <code>models/cross_validation_results.csv</code> generated by <code>cross_validation.py</code>.</em>
+    </div>
+</div>
+
+<!-- Performance Comparison Chart -->
+<div class="card chart-panel">
+    <div class="card-header">
+        <div>
+            <span class="card-kicker">Visual Comparison</span>
+            <h2>Model Accuracy vs. Macro F1 Score</h2>
+        </div>
+    </div>
+    <div class="chart-box">
+        <canvas id="performanceChart" height="240"></canvas>
+    </div>
+</div>
+
+<!-- Metric Explanations -->
+<div class="metric-explanations-grid">
+    <div class="card explanation-card">
+        <div class="explanation-icon">&#x25AF;</div>
+        <h3>What is Cross-Validation Accuracy?</h3>
+        <p>
+            <strong>Accuracy</strong> measures the percentage of total predictions that correctly match the actual sleep quality category (Poor, Moderate, or Good).
+            In 5-fold cross-validation, the dataset is split into 5 equal parts; each model is trained on 4 parts and evaluated on the remaining 1 part, repeating 5 times to compute a reliable average.
+        </p>
+    </div>
+
+    <div class="card explanation-card">
+        <div class="explanation-icon">&#x2696;</div>
+        <h3>What is Macro F1 Score?</h3>
+        <p>
+            <strong>Macro F1 Score</strong> measures balanced predictive quality across all three sleep categories equally.
+            Unlike standard accuracy, which can hide poor performance on smaller categories (like the 33 Poor records), Macro F1 calculates the F1 score for Poor, Moderate, and Good independently and averages them, ensuring no single class is neglected.
+        </p>
+    </div>
+</div>
+
+<!-- Clean Data Script Block -->
+<script type="application/json" id="cv-results-data">
+{{ cv_results|tojson }}
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const canvas = document.getElementById('performanceChart');
+    const dataElem = document.getElementById('cv-results-data');
+    if (!canvas || !dataElem) return;
+
+    const chartFont = "'Geist Mono', monospace";
+    const chartTextColor = 'rgba(255, 255, 255, 0.60)';
+
+    try {
+        const cvResults = JSON.parse(dataElem.textContent);
+        const models = cvResults.map(r => r.Model);
+        const accuracies = cvResults.map(r => Number(r['Accuracy Mean'].toFixed(2)));
+        const f1s = cvResults.map(r => Number(r['Macro F1'].toFixed(2)));
+
+        new Chart(canvas.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: models,
+                datasets: [
+                    {
+                        label: 'CV Accuracy (%)',
+                        data: accuracies,
+                        backgroundColor: '#FEFF7C',
+                        borderRadius: 4
+                    },
+                    {
+                        label: 'Macro F1 Score (%)',
+                        data: f1s,
+                        backgroundColor: 'rgba(254, 255, 124, 0.40)',
+                        borderRadius: 4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: chartTextColor,
+                            font: { size: 11, family: chartFont }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(20, 20, 21, 0.95)',
+                        borderColor: '#262626',
+                        borderWidth: 1,
+                        titleFont: { family: chartFont, size: 12 },
+                        bodyFont: { family: chartFont, size: 11 },
+                        titleColor: '#ffffff',
+                        bodyColor: chartTextColor,
+                        padding: 12,
+                        callbacks: {
+                            label: function(context) {
+                                return ` ${context.dataset.label}: ${context.raw}%`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { ticks: { color: chartTextColor, font: { family: chartFont, size: 10 } }, grid: { display: false } },
+                    y: { 
+                        min: 75,
+                        max: 100,
+                        ticks: { color: chartTextColor, font: { family: chartFont, size: 11 }, callback: v => v + '%' }, 
+                        grid: { color: 'rgba(255, 255, 255, 0.04)' } 
+                    }
+                }
+            }
+        });
+    } catch (err) {
+        console.error("Failed to parse CV results for performance chart:", err);
+    }
+});
+</script>
+{% endblock %}

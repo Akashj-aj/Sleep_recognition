@@ -1,0 +1,299 @@
+{% extends "base.html" %}
+{% block title %}Sleep Prediction | Sleep Quality Pattern Recognition{% endblock %}
+
+{% block content %}
+<section class="page-intro-section">
+    <span class="card-kicker">Interactive AI Classification</span>
+    <h1>Sleep Quality Prediction</h1>
+    <p class="section-desc">
+        Complete the form below to classify your sleep quality using one of five trained machine-learning models.
+    </p>
+</section>
+
+<!-- Data Input Limitation Notice -->
+<div class="limitation-banner">
+    <div class="limitation-icon">i</div>
+    <div class="limitation-text">
+        <strong>Important Note on Input Data:</strong>
+        Features like <em>BMI Category</em> and <em>Sleep Disorder</em> rely on existing medical measurements or diagnoses.
+        The machine-learning pipeline requires these exact categorical options. If exact categories are unknown, select the option that best matches your health records or select "Normal" / "None".
+    </div>
+</div>
+
+{% if error %}
+<div class="alert alert-error" role="alert">
+    <strong>Validation Error:</strong> {{ error }}
+</div>
+{% endif %}
+
+<!-- Sample Profile Presets & Reset Bar -->
+<div class="preset-bar">
+    <div class="preset-label">Load Sample Profile:</div>
+    <div class="preset-buttons">
+        <button type="button" class="btn-preset" data-preset="A">Profile A (Normal / Healthy)</button>
+        <button type="button" class="btn-preset" data-preset="B">Profile B (Overweight / Insomnia)</button>
+        <button type="button" class="btn-preset" data-preset="C">Profile C (Obese / Sleep Apnea)</button>
+        <button type="button" class="btn-reset" id="reset-form-btn">Clear Form</button>
+    </div>
+</div>
+
+<!-- Prediction Layout: Form + Result Side-by-Side on Desktop -->
+<div class="prediction-layout">
+    <!-- Form Card -->
+    <div class="card form-card">
+        <form method="POST" action="{{ url_for('predict') }}" id="prediction-form" novalidate>
+            <!-- Form Group 1: Demographics -->
+            <div class="form-section">
+                <h3 class="form-section-title"><span class="section-num">01</span> Demographics &amp; Background</h3>
+                <div class="form-grid-2col">
+                    <!-- Age -->
+                    <div class="form-field">
+                        <label for="age">Age <span class="required">*</span></label>
+                        <span class="field-explanation">How old are you, in years?</span>
+                        <div class="input-with-unit">
+                            <input type="number" id="age" name="age" min="1" max="120" step="1" required
+                                   placeholder="25" value="{{ request.form.get('age', '') }}">
+                            <span class="unit-tag">years</span>
+                        </div>
+                        <span class="field-error" id="age-error"></span>
+                    </div>
+
+                    <!-- Gender -->
+                    <div class="form-field">
+                        <label for="gender">Gender <span class="required">*</span></label>
+                        <span class="field-explanation">Select your gender from the available options.</span>
+                        <select id="gender" name="gender" required>
+                            <option value="">-- Choose Gender --</option>
+                            {% for option in options.genders %}
+                            <option value="{{ option }}" {% if request.form.get('gender') == option %}selected{% endif %}>
+                                {{ option }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <span class="field-error" id="gender-error"></span>
+                    </div>
+
+                    <!-- Occupation -->
+                    <div class="form-field form-field-full">
+                        <label for="occupation">Occupation <span class="required">*</span></label>
+                        <span class="field-explanation">Select your current occupation.</span>
+                        <select id="occupation" name="occupation" required>
+                            <option value="">-- Choose Occupation --</option>
+                            {% for option in options.occupations %}
+                            <option value="{{ option }}" {% if request.form.get('occupation') == option %}selected{% endif %}>
+                                {{ option }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <span class="field-error" id="occupation-error"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Group 2: Sleep & Lifestyle Habits -->
+            <div class="form-section">
+                <h3 class="form-section-title"><span class="section-num">02</span> Sleep &amp; Lifestyle Habits</h3>
+                <div class="form-grid-2col">
+                    <!-- Sleep Duration -->
+                    <div class="form-field">
+                        <label for="sleep_duration">Hours of Sleep per Day <span class="required">*</span></label>
+                        <span class="field-explanation">Approximately how many hours do you sleep in a 24-hour day?</span>
+                        <div class="input-with-unit">
+                            <input type="number" id="sleep_duration" name="sleep_duration" min="0.1" max="24" step="0.1" required
+                                   placeholder="7.5" value="{{ request.form.get('sleep_duration', '') }}">
+                            <span class="unit-tag">hours</span>
+                        </div>
+                        <span class="field-error" id="sleep_duration-error"></span>
+                    </div>
+
+                    <!-- Physical Activity Level -->
+                    <div class="form-field">
+                        <label for="physical_activity">Physical Activity Level <span class="required">*</span></label>
+                        <span class="field-explanation">Total duration of physical activity per day (dataset range: 30-90 min).</span>
+                        <div class="input-with-unit">
+                            <input type="number" id="physical_activity" name="physical_activity" min="0" step="1" required
+                                   placeholder="45" value="{{ request.form.get('physical_activity', '') }}">
+                            <span class="unit-tag">min/day</span>
+                        </div>
+                        <span class="field-error" id="physical_activity-error"></span>
+                    </div>
+
+                    <!-- Perceived Stress Level -->
+                    <div class="form-field">
+                        <label for="stress_level">Perceived Stress Level <span class="required">*</span></label>
+                        <span class="field-explanation">Select a value from 1 to 10, where 1 means low stress and 10 means high stress.</span>
+                        <div class="input-with-unit">
+                            <input type="number" id="stress_level" name="stress_level" min="1" max="10" step="1" required
+                                   placeholder="5" value="{{ request.form.get('stress_level', '') }}">
+                            <span class="unit-tag">1-10</span>
+                        </div>
+                        <span class="field-error" id="stress_level-error"></span>
+                    </div>
+
+                    <!-- Daily Steps -->
+                    <div class="form-field">
+                        <label for="daily_steps">Daily Steps <span class="required">*</span></label>
+                        <span class="field-explanation">Approximately how many steps do you take in a typical day?</span>
+                        <div class="input-with-unit">
+                            <input type="number" id="daily_steps" name="daily_steps" min="0" step="1" required
+                                   placeholder="7000" value="{{ request.form.get('daily_steps', '') }}">
+                            <span class="unit-tag">steps/day</span>
+                        </div>
+                        <span class="field-error" id="daily_steps-error"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Group 3: Physiological & Clinical Factors -->
+            <div class="form-section">
+                <h3 class="form-section-title"><span class="section-num">03</span> Health &amp; Clinical Measurements</h3>
+                <div class="form-grid-2col">
+                    <!-- BMI Category -->
+                    <div class="form-field">
+                        <label for="bmi_category">BMI Category <span class="required">*</span></label>
+                        <span class="field-explanation">Select the BMI category that applies to you.</span>
+                        <select id="bmi_category" name="bmi_category" required>
+                            <option value="">-- Choose BMI Category --</option>
+                            {% for option in options.bmi_categories %}
+                            <option value="{{ option }}" {% if request.form.get('bmi_category') == option %}selected{% endif %}>
+                                {{ option }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <span class="field-error" id="bmi_category-error"></span>
+                    </div>
+
+                    <!-- Sleep Disorder -->
+                    <div class="form-field">
+                        <label for="sleep_disorder">Sleep Disorder <span class="required">*</span></label>
+                        <span class="field-explanation">Choose the recorded sleep-disorder category. Select None if no disorder is recorded.</span>
+                        <select id="sleep_disorder" name="sleep_disorder" required>
+                            <option value="">-- Choose Sleep Disorder --</option>
+                            {% for option in options.sleep_disorders %}
+                            <option value="{{ option }}" {% if request.form.get('sleep_disorder') == option %}selected{% endif %}>
+                                {{ option }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <span class="field-error" id="sleep_disorder-error"></span>
+                    </div>
+
+                    <!-- Upper Blood Pressure -->
+                    <div class="form-field">
+                        <label for="systolic_bp">Upper Blood Pressure <span class="required">*</span></label>
+                        <span class="field-explanation">Enter the upper number in a blood pressure reading.</span>
+                        <div class="input-with-unit">
+                            <input type="number" id="systolic_bp" name="systolic_bp" min="50" max="300" step="1" required
+                                   placeholder="120" value="{{ request.form.get('systolic_bp', '') }}">
+                            <span class="unit-tag">mmHg</span>
+                        </div>
+                        <span class="field-error" id="systolic_bp-error"></span>
+                    </div>
+
+                    <!-- Lower Blood Pressure -->
+                    <div class="form-field">
+                        <label for="diastolic_bp">Lower Blood Pressure <span class="required">*</span></label>
+                        <span class="field-explanation">Enter the lower number in a blood pressure reading.</span>
+                        <div class="input-with-unit">
+                            <input type="number" id="diastolic_bp" name="diastolic_bp" min="30" max="200" step="1" required
+                                   placeholder="80" value="{{ request.form.get('diastolic_bp', '') }}">
+                            <span class="unit-tag">mmHg</span>
+                        </div>
+                        <span class="field-error" id="diastolic_bp-error"></span>
+                    </div>
+
+                    <!-- Heart Rate -->
+                    <div class="form-field form-field-full">
+                        <label for="heart_rate">Heart Rate <span class="required">*</span></label>
+                        <span class="field-explanation">How many times does your heart beat per minute?</span>
+                        <div class="input-with-unit">
+                            <input type="number" id="heart_rate" name="heart_rate" min="1" max="250" step="1" required
+                                   placeholder="72" value="{{ request.form.get('heart_rate', '') }}">
+                            <span class="unit-tag">beats/min</span>
+                        </div>
+                        <span class="field-error" id="heart_rate-error"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Group 4: Classifier Selection & Submit -->
+            <div class="form-section">
+                <h3 class="form-section-title"><span class="section-num">04</span> Algorithm Selection</h3>
+                <div class="form-field form-field-full">
+                    <label for="model">Prediction Model <span class="required">*</span></label>
+                    <span class="field-explanation">Select a trained machine-learning model to execute classification.</span>
+                    <select id="model" name="model" required>
+                        {% for key, name in options.models.items() %}
+                        <option value="{{ key }}" {% if selected_model == key %}selected{% endif %}>
+                            {{ name }} {% if key == 'random_forest' %}(Best Model){% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-teal btn-submit">
+                        Predict Sleep Quality <span class="arrow-icon">&rarr;</span>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Result Side Panel -->
+    <div class="card result-panel-wrap">
+        {% if result %}
+        <div class="result-card result-{{ result.prediction|lower }}" id="result-display">
+            <div class="result-header">
+                <span class="result-kicker">Classification Output</span>
+                <span class="result-status-dot"></span>
+            </div>
+
+            <div class="result-badge-wrap">
+                <span class="result-badge {{ result.prediction|lower }}">
+                    {{ result.prediction }} Sleep Quality
+                </span>
+            </div>
+
+            <p class="result-explanation">
+                This classification category was generated by the trained machine-learning classifier based on your submitted inputs.
+            </p>
+
+            <div class="result-metrics-grid">
+                <div class="result-metric-item">
+                    <span class="metric-label">Selected Model</span>
+                    <strong class="metric-value">{{ options.models.get(selected_model, selected_model) }}</strong>
+                </div>
+
+                {% if result.confidence is not none %}
+                <div class="result-metric-item">
+                    <span class="metric-label">Class Probability</span>
+                    <strong class="metric-value">{{ "%.1f"|format(result.confidence) }}%</strong>
+                </div>
+                {% else %}
+                <div class="result-metric-item">
+                    <span class="metric-label">Class Probability</span>
+                    <strong class="metric-value text-muted">N/A (Decision Boundary)</strong>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="disclaimer-box">
+                <span class="disclaimer-title">Educational Disclaimer</span>
+                <p>This is an educational machine-learning prediction, not a medical diagnosis.</p>
+            </div>
+        </div>
+        {% else %}
+        <div class="result-card result-placeholder">
+            <div class="placeholder-icon">/</div>
+            <h3>Awaiting Input</h3>
+            <p>Fill out the profile parameters on the left and click <strong>Predict Sleep Quality</strong> to see model outputs.</p>
+            <div class="placeholder-tips">
+                <span>-- Try "Profile A" for a quick test</span>
+                <span>-- Random Forest achieves 98.57% CV accuracy</span>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

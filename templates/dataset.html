@@ -1,0 +1,271 @@
+{% extends "base.html" %}
+{% block title %}Dataset Analysis | Sleep Quality Pattern Recognition{% endblock %}
+
+{% block content %}
+<section class="page-intro-section">
+    <span class="card-kicker">Data Exploration</span>
+    <h1>Dataset Analysis</h1>
+    <p class="section-desc">
+        Exploratory summary and distribution of the 374 sleep and lifestyle dataset records used to train and evaluate the classification models.
+    </p>
+</section>
+
+<!-- Summary Stat Cards -->
+<section class="stat-cards-grid">
+    <div class="stat-card">
+        <div class="stat-meta">
+            <span class="stat-label">Total Records</span>
+        </div>
+        <div class="stat-value">{{ raw|length }}</div>
+        <div class="stat-hint">Observational lifestyle study rows</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-meta">
+            <span class="stat-label">Model Features</span>
+        </div>
+        <div class="stat-value">12</div>
+        <div class="stat-hint">8 Numeric + 4 Categorical</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-meta">
+            <span class="stat-label">Target Classes</span>
+        </div>
+        <div class="stat-value">3</div>
+        <div class="stat-hint">Poor, Moderate, &amp; Good</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-meta">
+            <span class="stat-label">Missing Disorders</span>
+        </div>
+        <div class="stat-value">{{ missing.get('Sleep Disorder', 219) }}</div>
+        <div class="stat-hint">Imputed as "None" (No disorder recorded)</div>
+    </div>
+</section>
+
+<!-- Charts Section -->
+<div class="charts-grid-2col">
+    <!-- Category Distribution -->
+    <div class="card chart-panel">
+        <div class="card-header">
+            <div>
+                <span class="card-kicker">Target Variable</span>
+                <h2>Sleep Quality Category Breakdown</h2>
+            </div>
+            <span class="badge badge-purple">N = {{ raw|length }}</span>
+        </div>
+        <div class="chart-box">
+            <canvas id="datasetCategoryChart" height="200"
+                    data-poor="{{ distribution.get('Poor', 33) }}"
+                    data-moderate="{{ distribution.get('Moderate', 187) }}"
+                    data-good="{{ distribution.get('Good', 154) }}">
+            </canvas>
+        </div>
+        <p class="chart-caption">
+            <strong>Chart Explanation:</strong> Displays the distribution of project-defined target categories across all 374 dataset records. Moderate sleep quality represents 50% of the sample, Good represents 41.2%, and Poor represents 8.8%.
+        </p>
+    </div>
+
+    <!-- Sleep Duration Distribution -->
+    <div class="card chart-panel">
+        <div class="card-header">
+            <div>
+                <span class="card-kicker">Feature Distribution</span>
+                <h2>{{ selected_feature }} distribution</h2>
+            </div>
+            <form method="get" action="{{ url_for('dataset_analysis') }}" class="feature-distribution-select">
+                <label for="dataset-feature">Feature</label>
+                <select id="dataset-feature" name="feature" onchange="this.form.submit()">
+                    {% for feature in feature_options %}
+                    <option value="{{ feature }}" {% if feature == selected_feature %}selected{% endif %}>{{ feature }}</option>
+                    {% endfor %}
+                </select>
+                <input type="hidden" name="model" value="{{ selected_model }}">
+            </form>
+        </div>
+        <div class="chart-box">
+            <canvas id="featureDistributionChart" height="200"
+                    data-labels='{{ distribution_labels|tojson }}'
+                    data-values='{{ distribution_values|tojson }}'>
+            </canvas>
+        </div>
+        <p class="chart-caption">
+            <strong>Chart Explanation:</strong> Shows how {{ selected_feature }} is distributed across the dataset records. This is a descriptive view of the sample and does not establish causation.
+        </p>
+    </div>
+</div>
+
+<!-- Feature Importance -->
+<div class="card importance-card dataset-importance-card">
+    <div class="card-header">
+        <div>
+            <span class="card-kicker">Model Interpretation</span>
+            <h2>Feature Importance</h2>
+        </div>
+        <form method="get" action="{{ url_for('dataset_analysis') }}" class="importance-model-select">
+            <input type="hidden" name="feature" value="{{ selected_feature }}">
+            <label for="importance-model">Model</label>
+            <select id="importance-model" name="model" onchange="this.form.submit()">
+                {% for key, name in available_models.items() %}
+                <option value="{{ key }}" {% if key == selected_model %}selected{% endif %}>{{ name }}</option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
+    <div class="importance-table-wrap">
+        <table class="data-table importance-table">
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Feature</th>
+                    <th>Importance</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in importance %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ item.feature }}</td>
+                    <td>{{ '%.4f'|format(item.importance) }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="3">{{ importance_method }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <p class="chart-caption">
+        {{ importance_method }}. These values describe the selected model and do not prove that a feature causes sleep quality outcomes.
+    </p>
+</div>
+
+<!-- Raw Dataset Preview Table -->
+<div class="card table-card">
+    <div class="table-card-header">
+        <div>
+            <span class="card-kicker">Data Explorer</span>
+                <h2>Dataset Sample Preview (First 10 Rows)</h2>
+        </div>
+        <div class="table-search-wrap">
+            <input type="text" id="dataset-search" class="input-search" placeholder="Search visible rows..." aria-label="Filter dataset table">
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table" id="dataset-table">
+            <thead>
+                <tr>
+                    {% if preview %}
+                        {% for col in preview[0].keys() %}
+                        <th>{{ col }}</th>
+                        {% endfor %}
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in preview %}
+                <tr>
+                    {% for val in row.values() %}
+                    <td>{{ val }}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="table-footer-note">
+        Showing first 10 records out of {{ raw|length }} total records from <code>Sleep_health_and_lifestyle_dataset.csv</code>.
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const chartFont = "'Geist Mono', monospace";
+    const chartTextColor = 'rgba(255, 255, 255, 0.60)';
+    const chartTooltip = {
+        backgroundColor: 'rgba(20, 20, 21, 0.95)',
+        borderColor: '#262626',
+        borderWidth: 1,
+        titleFont: { family: chartFont, size: 12 },
+        bodyFont: { family: chartFont, size: 11 },
+        titleColor: '#ffffff',
+        bodyColor: chartTextColor,
+        padding: 12
+    };
+
+    // Category Distribution Chart
+    const canvasCat = document.getElementById('datasetCategoryChart');
+    if (canvasCat) {
+        const poor = Number(canvasCat.dataset.poor) || 33;
+        const moderate = Number(canvasCat.dataset.moderate) || 187;
+        const good = Number(canvasCat.dataset.good) || 154;
+
+        new Chart(canvasCat.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: ['Poor', 'Moderate', 'Good'],
+                datasets: [{
+                    label: 'Record Count',
+                    data: [poor, moderate, good],
+                    backgroundColor: ['#f43f5e', '#f59e0b', '#10b981'],
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        ...chartTooltip,
+                        callbacks: {
+                            label: function(context) {
+                                return ` ${context.raw} records`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { ticks: { color: chartTextColor, font: { family: chartFont, size: 11 } }, grid: { display: false } },
+                    y: { ticks: { color: chartTextColor, font: { family: chartFont, size: 11 } }, grid: { color: 'rgba(255, 255, 255, 0.04)' } }
+                }
+            }
+        });
+    }
+
+    // Selected feature distribution chart
+    const canvasFeature = document.getElementById('featureDistributionChart');
+    if (canvasFeature) {
+        const labels = JSON.parse(canvasFeature.dataset.labels);
+        const values = JSON.parse(canvasFeature.dataset.values);
+
+        new Chart(canvasFeature.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Record Count',
+                    data: values,
+                    backgroundColor: '#FEFF7C',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: chartTooltip
+                },
+                scales: {
+                    x: { ticks: { color: chartTextColor, font: { family: chartFont, size: 11 } }, grid: { display: false } },
+                    y: { ticks: { color: chartTextColor, font: { family: chartFont, size: 11 } }, grid: { color: 'rgba(255, 255, 255, 0.04)' } }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
