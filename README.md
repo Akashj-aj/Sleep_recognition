@@ -8,6 +8,12 @@ A Flask-based machine-learning dashboard that analyzes sleep and lifestyle recor
 
 The application uses saved scikit-learn pipelines, so the web interface does not retrain models when a user opens a page or submits a prediction.
 
+## Live application
+
+Open the deployed dashboard at:
+
+<https://sleep-recognition.onrender.com/>
+
 ## Contents
 
 - [Overview](#overview)
