@@ -214,6 +214,29 @@ python cross_validation.py
 python app.py
 ```
 
+## Deploy on Render
+
+This repository includes `render.yaml` and `Procfile` for deployment with
+Gunicorn. The dataset and saved model files in `data/` and `models/` must be
+committed because the application loads them at runtime.
+
+1. Commit and push the project to GitHub.
+2. Sign in to [Render](https://render.com/).
+3. Choose **New +** and select **Blueprint**.
+4. Select the GitHub repository `Akashj-aj/Sleep_recognition`.
+5. Confirm the service from `render.yaml` and create the web service.
+
+Render uses these commands:
+
+```text
+Build: pip install -r requirements.txt
+Start: gunicorn app:app
+```
+
+After deployment, open the HTTPS URL provided by Render. Do not use
+`python app.py` as the production server; that command is intended for local
+development.
+
 ## Evaluation outputs
 
 The project keeps two evaluation methods separate:
