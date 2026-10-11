@@ -48,6 +48,19 @@
   --duration: 0.6s;
 }
 
+[data-theme="light"] {
+  --bg-main: #f5f5ef;
+  --bg-surface: #ffffff;
+  --bg-input: #fafaf6;
+  --text-primary: #171717;
+  --text-secondary: rgba(23, 23, 23, 0.68);
+  --text-muted: #6b6b63;
+  --border: #d9d9cf;
+  --border-hover: #b8b8aa;
+  --yellow-text: #3f4000;
+  --yellow-glow: rgba(116, 117, 15, 0.12);
+}
+
 /* ==========================================================================
    Reset & Base
    ========================================================================== */
@@ -74,6 +87,7 @@ body.nexus-theme {
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 /* ==========================================================================
@@ -136,6 +150,12 @@ code {
   opacity: 1;
 }
 
+[data-theme="light"] .grid-overlay {
+  background-image:
+    linear-gradient(rgba(23, 23, 23, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(23, 23, 23, 0.035) 1px, transparent 1px);
+}
+
 /* ==========================================================================
    Navigation Bar
    ========================================================================== */
@@ -147,6 +167,12 @@ code {
   margin-bottom: 0;
   border-bottom: 1px solid var(--border);
   background: var(--bg-main);
+}
+
+.top-nav-wrapper.scrolled {
+  border-bottom-color: var(--yellow-border);
+  background: color-mix(in srgb, var(--bg-main) 95%, transparent);
+  backdrop-filter: blur(12px);
 }
 
 .floating-glass {
@@ -297,6 +323,38 @@ code {
 
 .btn-nexus-small:hover .arrow-icon {
   transform: translateX(3px);
+}
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-left: 18px;
+  padding: 8px 10px;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-family: 'Geist Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  transition: color 0.25s var(--ease-out), border-color 0.25s var(--ease-out), background 0.25s var(--ease-out);
+}
+
+.theme-toggle:hover,
+.theme-toggle:focus-visible {
+  color: var(--text-primary);
+  border-color: var(--yellow);
+  background: var(--yellow-glow);
+  outline: none;
+}
+
+.theme-toggle-icon {
+  color: var(--yellow);
+  font-size: 15px;
+  line-height: 1;
 }
 
 /* Mobile Toggle */
@@ -1952,6 +2010,10 @@ input::placeholder {
   }
   .nav-cta-desktop {
     display: none;
+  }
+  .theme-toggle {
+    margin-left: auto;
+    margin-right: 12px;
   }
   .dashboard-header {
     flex-direction: column;
