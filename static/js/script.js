@@ -1,31 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
     // ------------------------------------------------------------------
-    // 0. Persistent Theme Toggle
-    // ------------------------------------------------------------------
-    const themeToggle = document.getElementById("theme-toggle");
-    const savedTheme = localStorage.getItem("sleep-theme");
-
-    const setTheme = (theme) => {
-        const isLight = theme === "light";
-        document.documentElement.dataset.theme = isLight ? "light" : "dark";
-        if (themeToggle) {
-            themeToggle.setAttribute("aria-pressed", String(isLight));
-            themeToggle.setAttribute("aria-label", isLight ? "Switch to dark theme" : "Switch to light theme");
-            themeToggle.querySelector(".theme-toggle-icon").textContent = isLight ? "☾" : "☼";
-            themeToggle.querySelector(".theme-toggle-label").textContent = isLight ? "Dark" : "Light";
-        }
-    };
-
-    setTheme(savedTheme === "light" ? "light" : "dark");
-    if (themeToggle) {
-        themeToggle.addEventListener("click", () => {
-            const nextTheme = document.documentElement.dataset.theme === "light" ? "dark" : "light";
-            localStorage.setItem("sleep-theme", nextTheme);
-            setTheme(nextTheme);
-        });
-    }
-
-    // ------------------------------------------------------------------
     // 1. Scroll-Driven Reveal Animations (IntersectionObserver)
     //    Fade-and-slide: elements start transparent + 60px lower,
     //    move into place over 0.6s with sequenced delays.
@@ -97,7 +71,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const navWrapper = document.querySelector(".top-nav-wrapper");
     if (navWrapper) {
         const onScroll = () => {
-            navWrapper.classList.toggle("scrolled", window.scrollY > 50);
+            if (window.scrollY > 50) {
+                navWrapper.style.borderBottomColor = "rgba(254, 255, 124, 0.12)";
+                navWrapper.style.background = "rgba(8, 8, 9, 0.95)";
+                navWrapper.style.backdropFilter = "blur(12px)";
+            } else {
+                navWrapper.style.borderBottomColor = "#262626";
+                navWrapper.style.background = "#080809";
+                navWrapper.style.backdropFilter = "none";
+            }
         };
         window.addEventListener("scroll", onScroll, { passive: true });
         onScroll();
