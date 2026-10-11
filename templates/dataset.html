@@ -45,6 +45,47 @@
     </div>
 </section>
 
+<!-- Numeric Feature Summary -->
+<div class="card table-card feature-summary-card">
+    <div class="table-card-header">
+        <div>
+            <span class="card-kicker">Feature Summary</span>
+            <h2>Numeric Feature Statistics</h2>
+        </div>
+        <span class="badge badge-purple">{{ feature_summary|length }} features</span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table" id="feature-summary-table">
+            <thead>
+                <tr>
+                    <th>Feature</th>
+                    <th>Mean</th>
+                    <th>Median</th>
+                    <th>Minimum</th>
+                    <th>Maximum</th>
+                    <th>Std. Dev.</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in feature_summary %}
+                <tr>
+                    <td>{{ item.feature }}</td>
+                    <td>{{ '%.2f'|format(item.mean) }}</td>
+                    <td>{{ '%.2f'|format(item.median) }}</td>
+                    <td>{{ '%.2f'|format(item.minimum) }}</td>
+                    <td>{{ '%.2f'|format(item.maximum) }}</td>
+                    <td>{{ '%.2f'|format(item.std_dev) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="table-footer-note">
+        Descriptive statistics are calculated from the cleaned numeric features used by the models.
+    </div>
+</div>
+
 <!-- Charts Section -->
 <div class="charts-grid-2col">
     <!-- Category Distribution -->

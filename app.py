@@ -322,6 +322,17 @@ def predict():
 @app.route("/dataset")
 def dataset_analysis():
     context = dashboard_context()
+    feature_summary = [
+        {
+            "feature": feature,
+            "mean": context["numeric_summary"][feature]["mean"],
+            "median": context["numeric_summary"][feature]["50%"],
+            "minimum": context["numeric_summary"][feature]["min"],
+            "maximum": context["numeric_summary"][feature]["max"],
+            "std_dev": context["numeric_summary"][feature]["std"],
+        }
+        for feature in NUMERIC_FEATURES
+    ]
     selected_feature = request.args.get("feature", "Sleep Duration")
     if selected_feature not in NUMERIC_FEATURES:
         selected_feature = "Sleep Duration"
@@ -366,6 +377,7 @@ def dataset_analysis():
         "dataset.html",
         active_page="dataset",
         preview=preview,
+        feature_summary=feature_summary,
         feature_options=NUMERIC_FEATURES,
         selected_feature=selected_feature,
         selected_model=selected_model,
